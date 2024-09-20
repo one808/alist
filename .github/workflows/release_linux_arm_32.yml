@@ -1,0 +1,40 @@
+name: Build and Release Alist for ARMv7l
+
+on:
+  release:
+    types: [published]  # 当发布新版本时触发
+
+jobs:
+  build_armv7l:
+    name: Build ARMv7l
+    runs-on: ubuntu-latest
+
+    steps:
+      # 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 完整克隆仓库历史，方便获取版本信息
+
+      # 设置 Go 环境
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'  # 使用 Go 1.21 版本
+
+      # 安装构建依赖
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      # 编译 ARMv7l 版本
+      - name: Build Alist for ARMv7l
+        run: |
+          bash build.sh release linux_musl_arm  # 调用 build.sh 脚本进行 ARMv7l 编译
+
+      # 上传编译的 ARMv7l 二进制文件到 Release
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/compress/*.tar.gz  # 上传编译后的压缩包
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub 自动生成的 token 用于发布
